@@ -1,0 +1,71 @@
+name: Pages Deploy and E2E
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - master
+      - main
+  schedule:
+    - cron: '17 3 * * *'
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+  actions: read
+
+concurrency:
+  group: pages-deploy-and-e2e
+  cancel-in-progress: false
+
+jobs:
+  deploy-and-e2e:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Setup Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+
+      - name: Run unit tests
+        run: npm test
+
+      - name: Install Playwright
+        run: |
+          npm install --no-save @playwright/test
+          npx playwright install --with-deps chromium
+
+      - name: Prepare Pages artifact
+        run: |
+          rm -rf dist
+          mkdir -p dist
+          cp index.html main.js styles.css dist/
+
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v5
+        with:
+          path: dist
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v5
+
+      - name: Wait for deployed Pages content
+        env:
+          E2E_BASE_URL: ${{ steps.deployment.outputs.page_url }}
+        run: node scripts/wait-for-pages.mjs
+
+      - name: Run deployed Pages E2E
+        env:
+          E2E_BASE_URL: ${{ steps.deployment.outputs.page_url }}
+        run: npx playwright test
