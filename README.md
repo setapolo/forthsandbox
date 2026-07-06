@@ -49,6 +49,10 @@ Use this when you want to verify the UI on a phone, tablet, or another machine o
    - Changing the color picker changes the circle fill color.
    - The layout remains usable on the device's screen size.
 
+## PR smoke test
+
+This section is intentionally small so the repository can be used to verify the pull request workflow.
+
 ## Automated checks
 
 Run the dependency-free Node test suite:
