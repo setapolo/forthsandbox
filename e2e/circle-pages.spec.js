@@ -13,7 +13,7 @@ async function readResponsePreview(response) {
 
 test('GitHub Pages URL serves the Circle POC', async ({ page, request }, testInfo) => {
   const baseURL = testInfo.project.use.baseURL;
-  const response = await request.get('/');
+  const response = await request.get('./');
   const status = response.status();
   const finalUrl = response.url();
   const contentType = response.headers()['content-type'] || '<missing>';
@@ -42,7 +42,7 @@ test('GitHub Pages URL serves the Circle POC', async ({ page, request }, testInf
   ).toBe(200);
   expect(contentType, `Expected an HTML page from ${finalUrl}; got ${contentType}.`).toContain('text/html');
 
-  const pageResponse = await page.goto('/', { waitUntil: 'domcontentloaded' });
+  const pageResponse = await page.goto('./', { waitUntil: 'domcontentloaded' });
   expect(pageResponse, `Browser navigation to ${baseURL} did not produce a response.`).not.toBeNull();
   expect(pageResponse.status(), `Browser navigation to ${page.url()} returned HTTP ${pageResponse.status()}.`).toBe(200);
 
