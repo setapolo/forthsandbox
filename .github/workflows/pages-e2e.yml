@@ -65,7 +65,27 @@ jobs:
           E2E_BASE_URL: ${{ steps.deployment.outputs.page_url }}
         run: node scripts/wait-for-pages.mjs
 
+      - name: Capture deployed Pages HTTP diagnostics
+        env:
+          E2E_BASE_URL: ${{ steps.deployment.outputs.page_url }}
+        run: |
+          set +e
+          curl --include --location --max-time 30 "$E2E_BASE_URL" | head -200 | tee e2e-http-diagnostics.txt
+          exit 0
+
       - name: Run deployed Pages E2E
         env:
           E2E_BASE_URL: ${{ steps.deployment.outputs.page_url }}
-        run: npx playwright test
+          PLAYWRIGHT_HTML_OPEN: never
+        run: npx playwright test --reporter=line,html
+
+      - name: Upload E2E diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-diagnostics
+          path: |
+            e2e-http-diagnostics.txt
+            playwright-report/
+            test-results/
+          if-no-files-found: ignore
