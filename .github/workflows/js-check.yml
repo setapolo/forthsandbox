@@ -1,0 +1,107 @@
+name: JavaScript Check
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Check JavaScript syntax
+        id: check
+        continue-on-error: true
+        shell: bash
+        run: |
+          RESULT_FILE="ACTIONS_RESULT.md"
+          LOG_FILE="javascript-check.log"
+
+          : > "$LOG_FILE"
+
+          mapfile -d '' JS_FILES < <(
+            find . \
+              -type f \
+              -name '*.js' \
+              -not -path './.git/*' \
+              -not -path './node_modules/*' \
+              -not -path './dist/*' \
+              -not -path './build/*' \
+              -not -path './vendor/*' \
+              -print0
+          )
+
+          FAILED=0
+
+          if [ "${#JS_FILES[@]}" -eq 0 ]; then
+            echo "No external JavaScript files were found." \
+              | tee -a "$LOG_FILE"
+          else
+            for FILE in "${JS_FILES[@]}"; do
+              echo "Checking: $FILE" | tee -a "$LOG_FILE"
+
+              if node --check "$FILE" >> "$LOG_FILE" 2>&1; then
+                echo "PASS: $FILE" | tee -a "$LOG_FILE"
+              else
+                echo "FAIL: $FILE" | tee -a "$LOG_FILE"
+                FAILED=1
+              fi
+
+              echo >> "$LOG_FILE"
+            done
+          fi
+
+          {
+            echo "# GitHub Actions JavaScript Check"
+            echo
+            echo "- Checked at: $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
+            echo "- Commit: \`$GITHUB_SHA\`"
+            echo "- Workflow run: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+            echo
+
+            if [ "$FAILED" -eq 0 ]; then
+              echo "## Result: SUCCESS"
+            else
+              echo "## Result: FAILURE"
+            fi
+
+            echo
+            echo '```text'
+            cat "$LOG_FILE"
+            echo '```'
+            echo
+            echo "> This check verifies external JavaScript syntax only."
+            echo "> JavaScript inside HTML script tags and browser behavior were not tested."
+          } > "$RESULT_FILE"
+
+          if [ "$FAILED" -ne 0 ]; then
+            exit 1
+          fi
+
+      - name: Commit result
+        if: always()
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email \
+            "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git add ACTIONS_RESULT.md
+
+          if git diff --cached --quiet; then
+            echo "Result file did not change."
+            exit 0
+          fi
+
+          git commit -m "Update JavaScript check result"
+          git push
+
+      - name: Fail workflow if JavaScript check failed
+        if: steps.check.outcome == 'failure'
+        shell: bash
+        run: exit 1
