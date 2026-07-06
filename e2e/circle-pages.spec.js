@@ -7,10 +7,25 @@ async function setInputValue(page, selector, value) {
   }, value);
 }
 
-test('deployed Circle POC renders and responds to controls', async ({ page }) => {
-  await page.goto('/', { waitUntil: 'networkidle' });
+async function waitForDeployedCirclePoc(page) {
+  await expect
+    .poll(
+      async () => {
+        await page.goto(`/?ready=${Date.now()}`, { waitUntil: 'networkidle' });
+        return page.title();
+      },
+      {
+        message: 'wait for deployed Circle POC page title',
+        timeout: 300_000,
+        intervals: [5_000],
+      },
+    )
+    .toBe('Circle POC');
+}
 
-  await expect(page).toHaveTitle('Circle POC');
+test('deployed Circle POC renders and responds to controls', async ({ page }) => {
+  await waitForDeployedCirclePoc(page);
+
   await expect(page.locator('#circle-stage')).toHaveCount(1);
 
   const circle = page.locator('#poc-circle');

@@ -7,12 +7,18 @@ const requiredMarkers = [
   'src="main.js"',
 ];
 
+function cacheBustedUrl(rawUrl) {
+  const nextUrl = new URL(rawUrl);
+  nextUrl.searchParams.set('ready', String(Date.now()));
+  return nextUrl;
+}
+
 const startedAt = Date.now();
 let lastError = '';
 
 while (Date.now() - startedAt < timeoutMs) {
   try {
-    const response = await fetch(url, { cache: 'no-store' });
+    const response = await fetch(cacheBustedUrl(url), { cache: 'no-store' });
     const body = await response.text();
 
     if (!response.ok) {
