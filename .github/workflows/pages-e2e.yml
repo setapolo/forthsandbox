@@ -67,6 +67,14 @@ jobs:
           set -o pipefail
           node scripts/wait-for-pages.mjs 2>&1 | tee pages-readiness.log
 
+      - name: Capture deployed Pages HTTP diagnostics
+        env:
+          E2E_BASE_URL: ${{ steps.deployment.outputs.page_url }}
+        run: |
+          set +e
+          curl --include --location --max-time 30 "$E2E_BASE_URL" | head -200 | tee e2e-http-diagnostics.txt
+          exit 0
+
       - name: Run deployed Pages E2E
         env:
           E2E_BASE_URL: ${{ steps.deployment.outputs.page_url }}
