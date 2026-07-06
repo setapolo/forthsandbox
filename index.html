@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Circle POC</title>
+    <link rel="stylesheet" href="styles.css" />
+    <script type="module" src="main.js"></script>
+  </head>
+  <body>
+    <main class="app" aria-labelledby="page-title">
+      <section class="hero">
+        <p class="eyebrow">Loop Engineering POC</p>
+        <h1 id="page-title">JavaScriptとHTMLで円を描く</h1>
+        <p class="description">
+          最小の検証対象として、SVG上に1つの円をJavaScriptで描画し、
+          半径と色を小さなUIから変更します。
+        </p>
+      </section>
+
+      <section class="stage-card" aria-label="円の描画結果">
+        <svg
+          id="circle-stage"
+          class="stage"
+          viewBox="0 0 400 300"
+          role="img"
+          aria-labelledby="circle-title circle-description"
+        >
+          <title id="circle-title">中央に描かれた青い円</title>
+          <desc id="circle-description">
+            JavaScriptがSVG要素を作成し、中央に円を表示します。
+          </desc>
+        </svg>
+      </section>
+
+      <section class="controls" aria-label="円の操作">
+        <label class="control" for="radius-control">
+          <span>半径</span>
+          <input id="radius-control" type="range" min="32" max="120" value="72" />
+        </label>
+
+        <label class="control" for="color-control">
+          <span>色</span>
+          <input id="color-control" type="color" value="#2563eb" />
+        </label>
+      </section>
+    </main>
+  </body>
+</html>
