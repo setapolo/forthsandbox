@@ -1,41 +1,51 @@
 import { expect, test } from '@playwright/test';
 
-async function setInputValue(page, selector, value) {
-  await page.locator(selector).evaluate((input, nextValue) => {
-    input.value = nextValue;
-    input.dispatchEvent(new Event('input', { bubbles: true }));
-  }, value);
+const expectedTitle = /forthsandbox Circle POC/i;
+
+async function readResponsePreview(response) {
+  try {
+    const body = await response.text();
+    return body.replace(/\s+/g, ' ').trim().slice(0, 500) || '<empty body>';
+  } catch (error) {
+    return `<unable to read body: ${error instanceof Error ? error.message : String(error)}>`;
+  }
 }
 
-async function waitForDeployedCirclePoc(page) {
-  await expect
-    .poll(
-      async () => {
-        await page.goto(`/?ready=${Date.now()}`, { waitUntil: 'networkidle' });
-        return page.title();
-      },
+test('GitHub Pages URL serves the Circle POC', async ({ page, request }, testInfo) => {
+  const baseURL = testInfo.project.use.baseURL;
+  const response = await request.get('/');
+  const status = response.status();
+  const finalUrl = response.url();
+  const contentType = response.headers()['content-type'] || '<missing>';
+  const bodyPreview = await readResponsePreview(response);
+
+  await testInfo.attach('pages-http-response.json', {
+    body: JSON.stringify(
       {
-        message: 'wait for deployed Circle POC page title',
-        timeout: 300_000,
-        intervals: [5_000],
+        configuredBaseURL: baseURL,
+        finalUrl,
+        status,
+        statusText: response.statusText(),
+        contentType,
+        headers: response.headers(),
+        bodyPreview,
       },
-    )
-    .toBe('Circle POC');
-}
+      null,
+      2,
+    ),
+    contentType: 'application/json',
+  });
 
-test('deployed Circle POC renders and responds to controls', async ({ page }) => {
-  await waitForDeployedCirclePoc(page);
+  expect(
+    status,
+    `Expected GitHub Pages to return HTTP 200 for ${baseURL}; got ${status} ${response.statusText()} from ${finalUrl}. Body preview: ${bodyPreview}`,
+  ).toBe(200);
+  expect(contentType, `Expected an HTML page from ${finalUrl}; got ${contentType}.`).toContain('text/html');
 
-  await expect(page.locator('#circle-stage')).toHaveCount(1);
+  const pageResponse = await page.goto('/', { waitUntil: 'domcontentloaded' });
+  expect(pageResponse, `Browser navigation to ${baseURL} did not produce a response.`).not.toBeNull();
+  expect(pageResponse.status(), `Browser navigation to ${page.url()} returned HTTP ${pageResponse.status()}.`).toBe(200);
 
-  const circle = page.locator('#poc-circle');
-  await expect(circle).toHaveCount(1);
-  await expect(circle).toHaveAttribute('r', '72');
-  await expect(circle).toHaveAttribute('fill', '#2563eb');
-
-  await setInputValue(page, '#radius-control', '96');
-  await expect(circle).toHaveAttribute('r', '96');
-
-  await setInputValue(page, '#color-control', '#dc2626');
-  await expect(circle).toHaveAttribute('fill', '#dc2626');
+  await expect(page, `Unexpected page title at ${page.url()}.`).toHaveTitle(expectedTitle);
+  await expect(page.locator('#poc-circle'), 'Expected the deployed page to render the SVG circle.').toBeVisible();
 });

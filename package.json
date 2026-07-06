@@ -5,8 +5,7 @@
     "test": "node --test",
     "e2e": "playwright test",
     "wait:pages": "node scripts/wait-for-pages.mjs",
-    "smoke:pages": "npm run wait:pages && npm run e2e",
-    "smoke:local": "E2E_BASE_URL=http://127.0.0.1:8000/ npm run e2e"
+    "actions:pages-e2e": "node scripts/github-actions-status.mjs"
   },
   "type": "module"
 }
