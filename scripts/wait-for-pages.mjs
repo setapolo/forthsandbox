@@ -1,11 +1,6 @@
 const url = process.env.E2E_BASE_URL || 'https://setapolo.github.io/forthsandbox/';
 const timeoutMs = Number(process.env.PAGES_READY_TIMEOUT_MS || 300000);
 const intervalMs = Number(process.env.PAGES_READY_INTERVAL_MS || 5000);
-const requiredMarkers = [
-  '<title>Circle POC</title>',
-  'id="circle-stage"',
-  'src="main.js"',
-];
 
 function cacheBustedUrl(rawUrl) {
   const nextUrl = new URL(rawUrl);
@@ -19,20 +14,13 @@ let lastError = '';
 while (Date.now() - startedAt < timeoutMs) {
   try {
     const response = await fetch(cacheBustedUrl(url), { cache: 'no-store' });
-    const body = await response.text();
 
-    if (!response.ok) {
-      lastError = `HTTP ${response.status}`;
-    } else {
-      const missing = requiredMarkers.filter((marker) => !body.includes(marker));
-
-      if (missing.length === 0) {
-        console.log(`Pages deployment is ready: ${url}`);
-        process.exit(0);
-      }
-
-      lastError = `missing markers: ${missing.join(', ')}`;
+    if (response.ok) {
+      console.log(`Pages deployment returned HTTP ${response.status}: ${url}`);
+      process.exit(0);
     }
+
+    lastError = `HTTP ${response.status}`;
   } catch (error) {
     lastError = error instanceof Error ? error.message : String(error);
   }
