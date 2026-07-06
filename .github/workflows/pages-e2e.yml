@@ -63,7 +63,9 @@ jobs:
       - name: Wait for deployed Pages content
         env:
           E2E_BASE_URL: ${{ steps.deployment.outputs.page_url }}
-        run: node scripts/wait-for-pages.mjs
+        run: |
+          set -o pipefail
+          node scripts/wait-for-pages.mjs 2>&1 | tee pages-readiness.log
 
       - name: Capture deployed Pages HTTP diagnostics
         env:
@@ -76,16 +78,18 @@ jobs:
       - name: Run deployed Pages E2E
         env:
           E2E_BASE_URL: ${{ steps.deployment.outputs.page_url }}
-          PLAYWRIGHT_HTML_OPEN: never
-        run: npx playwright test --reporter=line,html
+        run: |
+          set -o pipefail
+          npx playwright test 2>&1 | tee pages-e2e.log
 
-      - name: Upload E2E diagnostics
+      - name: Upload Pages E2E diagnostics
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: e2e-diagnostics
+          name: pages-e2e-diagnostics
+          if-no-files-found: ignore
           path: |
-            e2e-http-diagnostics.txt
+            pages-readiness.log
+            pages-e2e.log
             playwright-report/
             test-results/
-          if-no-files-found: ignore
