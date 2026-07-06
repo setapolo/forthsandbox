@@ -2,29 +2,24 @@ name: Pages E2E
 
 on:
   workflow_dispatch:
-
   workflow_run:
     workflows:
       - pages-build-deployment
     types:
       - completed
-
   schedule:
     - cron: '17 3 * * *'
 
 jobs:
   pages-e2e:
-
     if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-
         uses: actions/checkout@v5
 
       - name: Setup Node
         uses: actions/setup-node@v6
-
         with:
           node-version: 24
 
@@ -36,8 +31,10 @@ jobs:
           npm install --no-save @playwright/test
           npx playwright install --with-deps chromium
 
-      - name: Wait for Pages deployment to settle
-        run: sleep 30
+      - name: Wait for deployed Pages content
+        env:
+          E2E_BASE_URL: https://setapolo.github.io/forthsandbox/
+        run: node scripts/wait-for-pages.mjs
 
       - name: Run deployed Pages E2E
         env:
