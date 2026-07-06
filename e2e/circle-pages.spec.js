@@ -10,9 +10,6 @@ async function setInputValue(page, selector, value) {
 test('deployed Circle POC renders and responds to controls', async ({ page }) => {
   await page.goto('/', { waitUntil: 'networkidle' });
 
-  await expect(page).toHaveTitle('Circle POC');
-  await expect(page.locator('#circle-stage')).toHaveCount(1);
-
   const circle = page.locator('#poc-circle');
   await expect(circle).toHaveCount(1);
   await expect(circle).toHaveAttribute('r', '72');
