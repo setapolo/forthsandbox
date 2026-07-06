@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 
-const expectedTitle = /Circle POC/i;
+const expectedTitle = /forthsandbox Circle POC/i;
 
 async function readResponsePreview(response) {
   try {
