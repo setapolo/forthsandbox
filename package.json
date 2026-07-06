@@ -2,7 +2,7 @@
   "scripts": {
     "serve": "python3 -m http.server 8000",
     "serve:lan": "python3 -m http.server 8000 --bind 0.0.0.0",
-    "test": "node --test"
+
   },
   "type": "module"
 }
